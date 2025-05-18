@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String   @id @default(cuid()) @map("id")
+  userType            String   @default("customer") @map("user_type")
+  firstName           String   @map("first_name")
+  lastName            String   @map("last_name")
+  email                String   @unique @map("email")
+  phone                String   @map("phone")
+  password             String   @db.VarChar(255) @map("password")
+  identificationType   String   @map("identification_type")
+  identificationNumber String   @map("identification_number")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  customer Customer?
+  employee Employee?
+
+  @@map("users")
+}
+
+
+model Customer {
+  id     String @id @default(cuid()) @map("id")
+  userId String @unique @map("user_id")
+  address String @map("address")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+  sells Sell[]
+
+  @@map("customers")
+}
+
+model Employee {
+  id           String  @id @default(cuid()) @map("id")
+  userId       String  @unique @map("user_id")
+  salary       Float   @map("salary")
+  employeeType String  @map("employee_type")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+  sells Sell[]
+
+  @@map("employees")
+}
+
+model Product {
+  id        String   @id @default(cuid()) @map("id")
+  sku       String   @unique @map("sku")
+  status    String   @default("active") @map("status")
+  description String   @map("description")
+  careInstructions String   @map("care_instructions")
+  imageUrl String   @map("image_url")
+  name      String   @map("name")
+  price     Float    @map("price")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  productSells ProductSell[]
+  inventories Inventory[]
+
+  @@map("products")
+}
+
+model ProductSell {
+  id         String   @id @default(cuid()) @map("id")
+  productId  String   @map("product_id")
+  sellId     String   @map("sell_id")
+  quantity   Int      @map("quantity")
+  colorId    String   @map("color_id")
+  sizeId     String   @map("size_id")
+  totalPrice Float    @map("total_price")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id])
+  sell    Sell    @relation(fields: [sellId], references: [id], onDelete: Cascade)
+  color Color @relation(fields: [colorId], references: [id])
+  size Size @relation(fields: [sizeId], references: [id])
+
+  @@map("product_sells")
+}
+
+model Sell {
+  id          String   @id @default(cuid()) @map("id")
+  customerId  String   @map("customer_id")
+  employeeId  String?  @map("employee_id")
+  totalPrice  Float    @map("total_price")
+  couponCode  String?  @map("coupon_code")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  employee Employee? @relation(fields: [employeeId], references: [id])
+  coupon Coupon? @relation(fields: [couponCode], references: [code])
+  productSells ProductSell[]
+
+  @@map("sells")
+}
+
+model Coupon {
+  id          String   @id @default(cuid()) @map("id")
+  code        String   @unique @map("code")
+  discount    Float    @map("discount")
+  startDate   DateTime @map("start_date")
+  endDate     DateTime @map("end_date")
+  status      String   @default("active") @map("status")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  sells Sell[]
+
+  @@map("coupons")
+}
+
+model Size {
+  id          String   @id @default(cuid()) @map("id")
+  size        String   @map("size")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  inventories Inventory[]
+  productSells ProductSell[]
+
+  @@map("sizes")
+}
+
+model Color {
+  id          String   @id @default(cuid()) @map("id")
+  color       String   @map("color")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  inventories Inventory[]
+  productSells ProductSell[]
+
+  @@map("colors")
+}
+
+model Inventory {
+  id          String   @id @default(cuid()) @map("id")
+  productId   String   @map("product_id")
+  sizeId      String   @map("size_id")
+  colorId     String   @map("color_id")
+  quantity    Int      @map("quantity")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id])
+  size Size @relation(fields: [sizeId], references: [id])
+  color Color @relation(fields: [colorId], references: [id])
+
+  @@map("inventories")
+}
