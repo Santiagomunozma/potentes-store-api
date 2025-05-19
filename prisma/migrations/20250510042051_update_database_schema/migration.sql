@@ -10,7 +10,7 @@
 */
 
 -- Primero creamos las tablas nuevas
-CREATE TABLE "sizes" (
+CREATE TABLE IF NOT EXISTS "sizes" (
     "id" TEXT NOT NULL,
     "size" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -18,7 +18,7 @@ CREATE TABLE "sizes" (
     CONSTRAINT "sizes_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "colors" (
+CREATE TABLE IF NOT EXISTS "colors" (
     "id" TEXT NOT NULL,
     "color" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -26,39 +26,60 @@ CREATE TABLE "colors" (
     CONSTRAINT "colors_pkey" PRIMARY KEY ("id")
 );
 
--- Insertamos un tamaño y color por defecto
+-- Insertamos un tamaño y color por defecto si no existen
 INSERT INTO "sizes" ("id", "size", "created_at", "updated_at")
-VALUES ('default_size', 'Default', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+VALUES ('default_size', 'Default', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO "colors" ("id", "color", "created_at", "updated_at")
-VALUES ('default_color', 'Default', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+VALUES ('default_color', 'Default', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
 
--- Agregamos las columnas a coupons
-ALTER TABLE "coupons" 
-ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+-- Verificamos si las columnas existen en coupons antes de agregarlas
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'coupons' AND column_name = 'created_at') THEN
+        ALTER TABLE "coupons" ADD COLUMN "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'coupons' AND column_name = 'updated_at') THEN
+        ALTER TABLE "coupons" ADD COLUMN "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    END IF;
+END $$;
 
--- Agregamos las columnas a product_sells
-ALTER TABLE "product_sells" 
-ADD COLUMN IF NOT EXISTS "color_id" TEXT NOT NULL DEFAULT 'default_color',
-ADD COLUMN IF NOT EXISTS "size_id" TEXT NOT NULL DEFAULT 'default_size';
+-- Verificamos si las columnas existen en product_sells antes de agregarlas
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'product_sells' AND column_name = 'color_id') THEN
+        ALTER TABLE "product_sells" ADD COLUMN "color_id" TEXT NOT NULL DEFAULT 'default_color';
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'product_sells' AND column_name = 'size_id') THEN
+        ALTER TABLE "product_sells" ADD COLUMN "size_id" TEXT NOT NULL DEFAULT 'default_size';
+    END IF;
+END $$;
 
 -- Eliminamos los valores por defecto después de que los datos estén actualizados
 ALTER TABLE "product_sells" 
 ALTER COLUMN "color_id" DROP DEFAULT,
 ALTER COLUMN "size_id" DROP DEFAULT;
 
--- Eliminamos la columna stock de products
+-- Eliminamos la columna stock de products si existe
 ALTER TABLE "products" DROP COLUMN IF EXISTS "stock";
 
--- Agregamos la columna coupon_code a sells
-ALTER TABLE "sells" ADD COLUMN IF NOT EXISTS "coupon_code" TEXT;
+-- Agregamos la columna coupon_code a sells si no existe
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sells' AND column_name = 'coupon_code') THEN
+        ALTER TABLE "sells" ADD COLUMN "coupon_code" TEXT;
+    END IF;
+END $$;
 
 -- Modificamos el tipo de dato de password en users
 ALTER TABLE "users" ALTER COLUMN "password" SET DATA TYPE VARCHAR(255);
 
--- Creamos la tabla inventories
-CREATE TABLE "inventories" (
+-- Creamos la tabla inventories si no existe
+CREATE TABLE IF NOT EXISTS "inventories" (
     "id" TEXT NOT NULL,
     "product_id" TEXT NOT NULL,
     "size_id" TEXT NOT NULL,
@@ -69,21 +90,36 @@ CREATE TABLE "inventories" (
     CONSTRAINT "inventories_pkey" PRIMARY KEY ("id")
 );
 
--- Agregamos las foreign keys
-ALTER TABLE "product_sells" ADD CONSTRAINT "product_sells_color_id_fkey" 
-FOREIGN KEY ("color_id") REFERENCES "colors"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+-- Agregamos las foreign keys si no existen
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'product_sells_color_id_fkey') THEN
+        ALTER TABLE "product_sells" ADD CONSTRAINT "product_sells_color_id_fkey" 
+        FOREIGN KEY ("color_id") REFERENCES "colors"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
 
-ALTER TABLE "product_sells" ADD CONSTRAINT "product_sells_size_id_fkey" 
-FOREIGN KEY ("size_id") REFERENCES "sizes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'product_sells_size_id_fkey') THEN
+        ALTER TABLE "product_sells" ADD CONSTRAINT "product_sells_size_id_fkey" 
+        FOREIGN KEY ("size_id") REFERENCES "sizes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
 
-ALTER TABLE "sells" ADD CONSTRAINT "sells_coupon_code_fkey" 
-FOREIGN KEY ("coupon_code") REFERENCES "coupons"("code") ON DELETE SET NULL ON UPDATE CASCADE;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'sells_coupon_code_fkey') THEN
+        ALTER TABLE "sells" ADD CONSTRAINT "sells_coupon_code_fkey" 
+        FOREIGN KEY ("coupon_code") REFERENCES "coupons"("code") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
 
-ALTER TABLE "inventories" ADD CONSTRAINT "inventories_product_id_fkey" 
-FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'inventories_product_id_fkey') THEN
+        ALTER TABLE "inventories" ADD CONSTRAINT "inventories_product_id_fkey" 
+        FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
 
-ALTER TABLE "inventories" ADD CONSTRAINT "inventories_size_id_fkey" 
-FOREIGN KEY ("size_id") REFERENCES "sizes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'inventories_size_id_fkey') THEN
+        ALTER TABLE "inventories" ADD CONSTRAINT "inventories_size_id_fkey" 
+        FOREIGN KEY ("size_id") REFERENCES "sizes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
 
-ALTER TABLE "inventories" ADD CONSTRAINT "inventories_color_id_fkey" 
-FOREIGN KEY ("color_id") REFERENCES "colors"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'inventories_color_id_fkey') THEN
+        ALTER TABLE "inventories" ADD CONSTRAINT "inventories_color_id_fkey" 
+        FOREIGN KEY ("color_id") REFERENCES "colors"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
