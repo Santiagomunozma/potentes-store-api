@@ -9,7 +9,25 @@
 
 */
 
--- Primero creamos las tablas nuevas
+-- Primero manejamos la tabla coupons
+DO $$ 
+BEGIN
+    -- Si la columna updated_at no existe, la creamos
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'coupons' AND column_name = 'updated_at') THEN
+        ALTER TABLE "coupons" ADD COLUMN "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    END IF;
+
+    -- Si la columna created_at no existe, la creamos
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'coupons' AND column_name = 'created_at') THEN
+        ALTER TABLE "coupons" ADD COLUMN "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    END IF;
+
+    -- Actualizamos los registros nulos
+    UPDATE coupons SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL;
+    UPDATE coupons SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL;
+END $$;
+
+-- Creamos las tablas nuevas si no existen
 CREATE TABLE IF NOT EXISTS "sizes" (
     "id" TEXT NOT NULL,
     "size" TEXT NOT NULL,
@@ -26,7 +44,7 @@ CREATE TABLE IF NOT EXISTS "colors" (
     CONSTRAINT "colors_pkey" PRIMARY KEY ("id")
 );
 
--- Insertamos un tamaño y color por defecto si no existen
+-- Insertamos valores por defecto si no existen
 INSERT INTO "sizes" ("id", "size", "created_at", "updated_at")
 VALUES ('default_size', 'Default', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO NOTHING;
@@ -35,19 +53,7 @@ INSERT INTO "colors" ("id", "color", "created_at", "updated_at")
 VALUES ('default_color', 'Default', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO NOTHING;
 
--- Verificamos si las columnas existen en coupons antes de agregarlas
-DO $$ 
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'coupons' AND column_name = 'created_at') THEN
-        ALTER TABLE "coupons" ADD COLUMN "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'coupons' AND column_name = 'updated_at') THEN
-        ALTER TABLE "coupons" ADD COLUMN "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
-    END IF;
-END $$;
-
--- Verificamos si las columnas existen en product_sells antes de agregarlas
+-- Manejamos las columnas de product_sells
 DO $$ 
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'product_sells' AND column_name = 'color_id') THEN
