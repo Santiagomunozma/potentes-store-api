@@ -4,6 +4,9 @@ import { Sell, SellModel } from "../models";
 import { SellPresenter } from "../presenters";
 import { Product, ProductModel } from "../../products/models";
 import { AuthenticatedRequest } from "../../auth/middleware/auth.middleware";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export const SellController = {
   createSell: async (req: Request, res: Response): Promise<void> => {
@@ -58,16 +61,20 @@ export const SellController = {
               );
             }
 
-            return ProductModel.updateProductOnly({
-              id: productSell.productId,
-              sku: productData.sku,
-              status: productData.status,
-              name: productData.name,
-              careInstructions: productData.careInstructions,
-              imageUrl: productData.imageUrl,
-              description: productData.description,
-              price: productData.price,
+            await prisma.inventory.updateMany({
+              where: {
+                productId: productSell.productId,
+                colorId: productSell.colorId,
+                sizeId: productSell.sizeId,
+              },
+              data: {
+                quantity: {
+                  decrement: productSell.quantity,
+                },
+              },
             });
+
+            return productData;
           }
         );
 
