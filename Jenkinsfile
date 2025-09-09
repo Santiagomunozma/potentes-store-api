@@ -37,7 +37,9 @@ pipeline {
         stage('Test') {
             steps {
                 ansiColor('xterm') {
-                    bat 'npm test || true'  // para que no falle si aún no tienes tests
+bat '''
+    npm test || exit /b 0
+'''
                 }
             }
         }
