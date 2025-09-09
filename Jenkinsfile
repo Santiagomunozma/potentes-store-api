@@ -19,22 +19,22 @@ pipeline {
         stage('Instalar dependencias') {
             steps {
                 ansiColor('xterm') {
-                    sh 'npm install'
+                    bat 'npm install'
                 }
             }
         }
 
         stage('Build backend') {
             steps {
-                sh 'npm run build'
-                sh 'zip -r backend.zip dist package.json package-lock.json'
+                bat 'npm run build'
+                bat 'zip -r backend.zip dist package.json package-lock.json'
             }
         }
 
         stage('Test') {
             steps {
                 ansiColor('xterm') {
-                    sh 'npm test || true'  // para que no falle si aún no tienes tests
+                    bat 'npm test || true'  // para que no falle si aún no tienes tests
                 }
             }
         }
