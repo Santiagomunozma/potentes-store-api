@@ -50,7 +50,7 @@ export const SellController = {
 
       if (sell?.productSells) {
         const productUpdatePromises = sell.productSells.map(
-          async (productSell) => {
+          async (productSell: any) => {
             const productData = await ProductModel.findById(
               productSell.productId
             );

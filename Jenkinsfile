@@ -24,11 +24,10 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build backend') {
             steps {
-                ansiColor('xterm') {
-                    sh 'npm run build'
-                }
+                sh 'npm run build'
+                sh 'zip -r backend.zip dist package.json package-lock.json'
             }
         }
 
