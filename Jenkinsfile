@@ -26,10 +26,13 @@ pipeline {
 
         stage('Build backend') {
             steps {
-                bat 'npm run build'
-                bat 'zip -r backend.zip dist package.json package-lock.json'
-            }
-        }
+        bat '''
+            npm run build
+            tar -a -c -f backend.zip dist package.json package-lock.json
+        '''
+    }
+}
+
 
         stage('Test') {
             steps {
