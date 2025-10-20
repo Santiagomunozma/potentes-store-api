@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { createSellSchema, updateSellSchema } from "../validations";
-import { Sell, SellModel } from "../models";
+import { Sell, SellModel, ProductSell } from "../models";
 import { SellPresenter } from "../presenters";
 import { Product, ProductModel } from "../../products/models";
 import { AuthenticatedRequest } from "../../auth/middleware/auth.middleware";
@@ -50,7 +50,7 @@ export const SellController = {
 
       if (sell?.productSells) {
         const productUpdatePromises = sell.productSells.map(
-          async (productSell) => {
+          async (productSell: ProductSell) => {
             const productData = await ProductModel.findById(
               productSell.productId
             );

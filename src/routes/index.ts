@@ -10,6 +10,11 @@ import { authRoutes } from "../modules/auth";
 
 const router = Router();
 
+// Health endpoint
+router.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 router.use("/users", userRoutes);
 router.use("/auth", authRoutes);
 router.use("/products", productRoutes);
