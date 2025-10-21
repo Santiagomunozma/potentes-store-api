@@ -1,0 +1,36 @@
+pipeline {
+  agent { label 'docker-node' }
+  environment {
+    AWS_DEFAULT_REGION = "us-east-2"
+  }
+  stages {
+    stage('Checkout') { steps { checkout scm } }
+    stage('Build & Test') {
+      steps {
+        sh 'npm ci'
+        sh 'npm run build'
+      }
+    }
+    stage('Docker Build & Push') {
+      steps {
+        script {
+          def imageRepo = "potentes.jfrog.io/docker-dev/potentes-backend:latest"
+          def commitSha = env.GIT_COMMIT?.take(7) ?: "dev"
+          withCredentials([usernamePassword(credentialsId: 'jfrog', usernameVariable: 'username', passwordVariable: 'password')]) {
+            sh "docker build -t ${imageRepo}:${commitSha} -t ${imageRepo}:staging ."
+            sh "echo $password | docker login -u $username --password-stdin potentes.jfrog.io"
+            sh "docker push ${imageRepo}:${commitSha}"
+            sh "docker push ${imageRepo}:staging"
+          }
+        }
+      }
+    }
+    stage('Deploy to ECS') {
+      steps {
+        withAWS(credentials: 'aws-potentes', region: "us-east-2") {
+          sh "aws ecs update-service --cluster potente-cluster-prod --service potentes-backend-service --force-new-deployment"
+        }
+      }
+    }
+  }
+}
