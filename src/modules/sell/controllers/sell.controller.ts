@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { paramString } from "../../../utils/routeParams";
 import { createSellSchema, updateSellSchema } from "../validations";
 import { Sell, SellModel, ProductSell } from "../models";
 import { SellPresenter } from "../presenters";
@@ -99,7 +100,7 @@ export const SellController = {
 
   updateSell: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
       const result = updateSellSchema.safeParse({ ...req.body, id });
 
       if (!result.success) {
@@ -123,7 +124,7 @@ export const SellController = {
 
   deleteSell: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res
@@ -148,7 +149,7 @@ export const SellController = {
 
   getSellById: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res

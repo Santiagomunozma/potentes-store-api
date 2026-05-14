@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { paramString } from "../../../utils/routeParams";
 import { createCouponSchema, updateCouponSchema } from "../validations";
 import { Coupon, CouponModel } from "../models";
 import { CouponPresenter } from "../presenters";
@@ -30,7 +31,7 @@ export const CouponController = {
 
   updateCoupon: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
       const result = updateCouponSchema.safeParse({ ...req.body, id });
 
       if (!result.success) {
@@ -54,7 +55,7 @@ export const CouponController = {
 
   deleteCoupon: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res
@@ -81,7 +82,7 @@ export const CouponController = {
 
   getCouponById: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res
@@ -133,7 +134,15 @@ export const CouponController = {
 
   getCouponByCode: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { code } = req.params;
+      const code = paramString(req.params.code);
+      if (!code) {
+        res
+          .status(400)
+          .json(
+            CouponPresenter.formatError({ message: "Coupon code is required" })
+          );
+        return;
+      }
       const coupon = await CouponModel.findByCode(code);
       res.status(200).json(coupon);
     } catch (error) {

@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { paramString } from "../../../utils/routeParams";
 import { Inventory, InventoryModel } from "../models";
 import { InventoryPresenter } from "../presenters";
 import { createInventorySchema, updateInventorySchema } from "../validations";
@@ -30,7 +31,7 @@ export const InventoryController = {
 
   updateInventory: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
       const result = updateInventorySchema.safeParse({ ...req.body, id });
 
       if (!result.success) {
@@ -54,7 +55,7 @@ export const InventoryController = {
 
   deleteInventory: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res
@@ -83,7 +84,7 @@ export const InventoryController = {
 
   getInventoryById: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res

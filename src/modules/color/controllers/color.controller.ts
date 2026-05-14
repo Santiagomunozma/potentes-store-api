@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { paramString } from "../../../utils/routeParams";
 import { ColorPresenter } from "../presenters";
 import { createColorSchema, updateColorSchema } from "../validations";
 import { Color, ColorModel } from "../models";
@@ -30,7 +31,7 @@ export const ColorController = {
 
   updateColor: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
       const result = updateColorSchema.safeParse({ ...req.body, id });
 
       if (!result.success) {
@@ -54,7 +55,7 @@ export const ColorController = {
 
   deleteColor: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res
@@ -81,7 +82,7 @@ export const ColorController = {
 
   getColorById: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res

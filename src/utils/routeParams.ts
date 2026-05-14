@@ -1,0 +1,7 @@
+/** Normaliza `req.params.*` (Express 5 puede tipar como `string | string[]`). */
+export function paramString(
+  v: string | string[] | undefined
+): string | undefined {
+  if (v === undefined) return undefined;
+  return Array.isArray(v) ? v[0] : v;
+}

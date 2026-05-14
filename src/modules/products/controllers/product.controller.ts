@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { paramString } from "../../../utils/routeParams";
 import { createProductSchema, updateProductSchema } from "../validations";
 import { Product, ProductModel } from "../models";
 import { ProductPresenter } from "../presenters";
@@ -37,7 +38,7 @@ export const ProductController = {
 
   updateProduct: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
       const result = updateProductSchema.safeParse({
         ...req.body,
         id,
@@ -69,7 +70,7 @@ export const ProductController = {
 
   deleteProduct: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res
@@ -96,7 +97,7 @@ export const ProductController = {
 
   getProductById: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res

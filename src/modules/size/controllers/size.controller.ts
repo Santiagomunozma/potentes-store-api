@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { paramString } from "../../../utils/routeParams";
 import { createSizeSchema, updateSizeSchema } from "../validations";
 import { SizePresenter } from "../presenters";
 import { Size, SizeModel } from "../models";
@@ -30,7 +31,7 @@ export const SizeController = {
 
   updateSize: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
       const result = updateSizeSchema.safeParse({ ...req.body, id });
 
       if (!result.success) {
@@ -54,7 +55,7 @@ export const SizeController = {
 
   deleteSize: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res
@@ -79,7 +80,7 @@ export const SizeController = {
 
   getSizeById: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res

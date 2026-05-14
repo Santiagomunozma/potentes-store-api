@@ -3,6 +3,7 @@ import { createUserSchema, updateUserSchema } from "../validations";
 import { User, UserModel } from "../models";
 import { UserPresenter } from "../presenters";
 import * as bcrypt from "bcrypt";
+import { paramString } from "../../../utils/routeParams";
 
 export const UserController = {
   createUser: async (req: Request, res: Response): Promise<void> => {
@@ -37,7 +38,7 @@ export const UserController = {
 
   updateUser: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
       const result = updateUserSchema.safeParse({ ...req.body, id });
 
       if (!result.success) {
@@ -61,7 +62,7 @@ export const UserController = {
 
   deleteUser: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res
@@ -86,7 +87,7 @@ export const UserController = {
 
   getUserById: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = paramString(req.params.id);
 
       if (!id) {
         res
