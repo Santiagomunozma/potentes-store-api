@@ -7,6 +7,8 @@ import { inventoryRoutes } from "../modules/inventory";
 import { colorRoutes } from "../modules/color";
 import { sizeRoutes } from "../modules/size";
 import { authRoutes } from "../modules/auth";
+import { categoryRoutes } from "../modules/category/routes/category.routes";
+import { adminRoutes } from "../modules/admin/admin.routes";
 
 const router = Router();
 
@@ -23,4 +25,6 @@ router.use("/coupons", couponRoutes);
 router.use("/inventory", inventoryRoutes);
 router.use("/colors", colorRoutes);
 router.use("/sizes", sizeRoutes);
+router.use("/categories", categoryRoutes);
+router.use("/admin", adminRoutes);
 export default router;

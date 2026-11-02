@@ -2,8 +2,9 @@ import { Request, Response } from "express";
 import { createUserSchema, updateUserSchema } from "../validations";
 import { User, UserModel } from "../models";
 import { UserPresenter } from "../presenters";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 import { paramString } from "../../../utils/routeParams";
+import { AuthenticatedRequest } from "../../auth/middleware/auth.middleware";
 
 export const UserController = {
   createUser: async (req: Request, res: Response): Promise<void> => {
@@ -16,6 +17,20 @@ export const UserController = {
       }
 
       const userData = result.data as User;
+      if (userData.userType === "Employee") {
+        const authReq = req as AuthenticatedRequest;
+        const isAdmin =
+          authReq.user?.userType === "Employee" &&
+          authReq.user.employee?.employeeType === "Admin";
+        if (!isAdmin) {
+          res.status(403).json(
+            UserPresenter.formatError({
+              message: "Solo un administrador puede crear empleados",
+            })
+          );
+          return;
+        }
+      }
       if (userData.password) {
         const saltRounds = 10;
         userData.password = await bcrypt.hash(userData.password, saltRounds);
@@ -105,6 +120,15 @@ export const UserController = {
             "User retrieved successfully"
           )
         );
+    } catch (error) {
+      res.status(500).json(UserPresenter.formatError(error));
+    }
+  },
+
+  getStats: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const stats = await UserModel.getStats();
+      res.status(200).json(stats);
     } catch (error) {
       res.status(500).json(UserPresenter.formatError(error));
     }

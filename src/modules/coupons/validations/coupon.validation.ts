@@ -7,6 +7,7 @@ export const createCouponSchema = z.object({
   discount: z.number().positive(),
   startDate: z.string().transform((str) => new Date(str)),
   endDate: z.string().transform((str) => new Date(str)),
+  maxUses: z.number().int().positive().nullable().optional(),
 });
 
 export const updateCouponSchema = createCouponSchema.deepPartial();

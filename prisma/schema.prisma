@@ -54,6 +54,17 @@ model Employee {
   @@map("employees")
 }
 
+model Category {
+  id        String   @id @default(cuid()) @map("id")
+  name      String   @unique @map("name")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@map("categories")
+}
+
 model Product {
   id        String   @id @default(cuid()) @map("id")
   sku       String   @unique @map("sku")
@@ -63,9 +74,11 @@ model Product {
   imageUrl String   @map("image_url")
   name      String   @map("name")
   price     Float    @map("price")
+  categoryId String? @map("category_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  category Category? @relation(fields: [categoryId], references: [id])
   productSells ProductSell[]
   inventories Inventory[]
 
@@ -97,6 +110,7 @@ model Sell {
   employeeId  String?  @map("employee_id")
   totalPrice  Float    @map("total_price")
   couponCode  String?  @map("coupon_code")
+  status      String   @default("paid") @map("status")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -115,6 +129,8 @@ model Coupon {
   startDate   DateTime @map("start_date")
   endDate     DateTime @map("end_date")
   status      String   @default("active") @map("status")
+  maxUses     Int?     @map("max_uses")
+  usedCount   Int      @default(0) @map("used_count")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   sells Sell[]

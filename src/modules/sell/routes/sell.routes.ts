@@ -1,48 +1,47 @@
 import { Router, Request, Response } from "express";
 import { SellController } from "../controllers";
-import { authenticateJWT } from "../../auth/middleware/auth.middleware";
+import {
+  authenticateJWT,
+  requireEmployee,
+} from "../../auth/middleware/auth.middleware";
 
 const router = Router();
+const employee = [authenticateJWT, requireEmployee];
 
-router.post(
-  "/",
-  async (req: Request, res: Response) =>
-    await SellController.createSell(req, res)
+router.post("/", authenticateJWT, async (req: Request, res: Response) =>
+  SellController.createSell(req, res)
 );
 
-router.put(
-  "/:id",
-  async (req: Request, res: Response) =>
-    await SellController.updateSell(req, res)
+router.put("/:id", ...employee, async (req: Request, res: Response) =>
+  SellController.updateSell(req, res)
 );
 
-router.delete(
-  "/:id",
-  async (req: Request, res: Response) =>
-    await SellController.deleteSell(req, res)
+router.delete("/:id", ...employee, async (req: Request, res: Response) =>
+  SellController.deleteSell(req, res)
 );
 
-router.get(
-  "/",
-  async (req: Request, res: Response) =>
-    await SellController.getAllSells(req, res)
+router.get("/", ...employee, async (req: Request, res: Response) =>
+  SellController.getAllSells(req, res)
 );
 
-router.get(
-  "/my-sells",
-  authenticateJWT,
-  async (req, res) => await SellController.getSellsByAuthenticatedUser(req, res)
+router.get("/my-sells", authenticateJWT, async (req, res) =>
+  SellController.getSellsByAuthenticatedUser(req, res)
 );
 
-router.get(
-  "/stats",
-  async (req: Request, res: Response) => await SellController.getStats(req, res)
+router.get("/stats", ...employee, async (req: Request, res: Response) =>
+  SellController.getStats(req, res)
 );
 
-router.get(
-  "/:id",
-  async (req: Request, res: Response) =>
-    await SellController.getSellById(req, res)
+router.patch("/:id/status", ...employee, async (req: Request, res: Response) =>
+  SellController.updateStatus(req, res)
+);
+
+router.post("/:id/cancel", ...employee, async (req: Request, res: Response) =>
+  SellController.cancelSell(req, res)
+);
+
+router.get("/:id", ...employee, async (req: Request, res: Response) =>
+  SellController.getSellById(req, res)
 );
 
 export { router as sellRoutes };

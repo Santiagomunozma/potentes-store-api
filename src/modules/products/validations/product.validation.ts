@@ -9,6 +9,7 @@ export const createProductSchema = z.object({
   imageUrl: z.string().url(),
   description: z.string(),
   price: z.number().positive(),
+  categoryId: z.string().nullable().optional(),
   inventory: z.array(
     z.object({
       sizeId: z.string(),

@@ -3,6 +3,7 @@ import { paramString } from "../../../utils/routeParams";
 import { Inventory, InventoryModel } from "../models";
 import { InventoryPresenter } from "../presenters";
 import { createInventorySchema, updateInventorySchema } from "../validations";
+import { prisma } from "../../../config/prisma";
 
 export const InventoryController = {
   createInventory: async (req: Request, res: Response): Promise<void> => {
@@ -122,6 +123,20 @@ export const InventoryController = {
             "Inventories retrieved successfully"
           )
         );
+    } catch (error) {
+      res.status(500).json(InventoryPresenter.formatError(error));
+    }
+  },
+
+  getLowStock: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const threshold = Number(req.query.threshold) || 5;
+      const rows = await prisma.inventory.findMany({
+        where: { quantity: { lte: threshold } },
+        include: { product: true, color: true, size: true },
+        orderBy: { quantity: "asc" },
+      });
+      res.status(200).json(InventoryPresenter.formatSuccess(rows, "Stock bajo"));
     } catch (error) {
       res.status(500).json(InventoryPresenter.formatError(error));
     }

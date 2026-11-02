@@ -408,6 +408,66 @@ export const SellModel = {
     return sells;
   },
 
+  updateStatus: async (id: string, status: string) => {
+    const allowed = ["paid", "preparing", "shipped"];
+    const current = await prisma.sell.findUnique({ where: { id } });
+    if (!current) {
+      throw new Error("Venta no encontrada");
+    }
+    if (current.status === "cancelled") {
+      throw new Error("La venta está anulada");
+    }
+    if (!allowed.includes(status)) {
+      throw new Error("Estado no permitido");
+    }
+    return prisma.sell.update({
+      where: { id },
+      data: { status },
+      include: {
+        customer: { include: { user: true } },
+        productSells: { include: { product: true, color: true, size: true } },
+      },
+    });
+  },
+
+  cancel: async (id: string) => {
+    const sell = await prisma.sell.findUnique({
+      where: { id },
+      include: { productSells: true },
+    });
+    if (!sell) {
+      throw new Error("Venta no encontrada");
+    }
+    if (sell.status === "cancelled") {
+      throw new Error("La venta ya está anulada");
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.sell.update({
+        where: { id },
+        data: { status: "cancelled" },
+      });
+      for (const line of sell.productSells) {
+        await tx.inventory.updateMany({
+          where: {
+            productId: line.productId,
+            colorId: line.colorId,
+            sizeId: line.sizeId,
+          },
+          data: { quantity: { increment: line.quantity } },
+        });
+      }
+    });
+
+    return prisma.sell.findUnique({
+      where: { id },
+      include: {
+        customer: { include: { user: true } },
+        productSells: { include: { product: true, color: true, size: true } },
+      },
+    });
+  },
+
   getMonthlyStats: async () => {
     try {
       console.log("Getting monthly sales stats");

@@ -8,6 +8,8 @@ export type Coupon = {
   startDate: Date;
   endDate: Date;
   status: string;
+  maxUses?: number | null;
+  usedCount?: number;
   createdAt?: Date;
   updatedAt?: Date;
 };

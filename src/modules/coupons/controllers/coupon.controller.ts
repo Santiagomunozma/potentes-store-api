@@ -144,6 +144,12 @@ export const CouponController = {
         return;
       }
       const coupon = await CouponModel.findByCode(code);
+      if (!coupon) {
+        res
+          .status(404)
+          .json(CouponPresenter.formatError({ message: "Coupon not found" }));
+        return;
+      }
       res.status(200).json(coupon);
     } catch (error) {
       res.status(500).json(CouponPresenter.formatError(error));

@@ -15,7 +15,9 @@ export class AuthController {
         res
           .status(401)
           .json(
-            UserPresenter.formatError({ message: "Invalid email or password" })
+            UserPresenter.formatError({
+              message: "Correo o contraseña incorrectos",
+            })
           );
         return;
       }

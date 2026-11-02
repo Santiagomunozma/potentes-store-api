@@ -60,3 +60,42 @@ export const authenticateJWT = async (
     return;
   }
 };
+
+export const authenticateJWTOptional = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  if (!req.headers.authorization) {
+    next();
+    return;
+  }
+  await authenticateJWT(req, res, next);
+};
+
+export const requireEmployee = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (req.user?.userType !== "Employee") {
+    res.status(403).json({ message: "Se requiere un empleado" });
+    return;
+  }
+  next();
+};
+
+export const requireAdmin = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  const isAdmin =
+    req.user?.userType === "Employee" &&
+    req.user.employee?.employeeType === "Admin";
+  if (!isAdmin) {
+    res.status(403).json({ message: "Se requiere un administrador" });
+    return;
+  }
+  next();
+};

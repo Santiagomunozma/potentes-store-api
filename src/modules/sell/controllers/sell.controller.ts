@@ -47,7 +47,81 @@ export const SellController = {
         return;
       }
 
+      const authUser = (req as AuthenticatedRequest).user;
+      if (
+        !authUser?.customer?.id ||
+        authUser.customer.id !== result.data.customerId
+      ) {
+        res.status(403).json(
+          SellPresenter.formatError({
+            message: "Solo un cliente autenticado puede registrar su compra",
+          })
+        );
+        return;
+      }
+
+      if (result.data.couponCode) {
+        const coupon = await prisma.coupon.findUnique({
+          where: { code: result.data.couponCode },
+        });
+        const now = new Date();
+        const withinUses =
+          coupon?.maxUses == null || coupon.usedCount < coupon.maxUses;
+        const valid =
+          coupon &&
+          coupon.status === "active" &&
+          now >= coupon.startDate &&
+          now <= coupon.endDate &&
+          withinUses;
+        if (!valid) {
+          res.status(400).json(
+            SellPresenter.formatError({
+              message: "El cupón no está vigente",
+            })
+          );
+          return;
+        }
+      }
+
+      for (const line of result.data.products) {
+        const inventory = await prisma.inventory.findFirst({
+          where: {
+            productId: line.productId,
+            colorId: line.colorId,
+            sizeId: line.sizeId,
+          },
+        });
+
+        const product = await prisma.product.findUnique({
+          where: { id: line.productId },
+        });
+        if (!product || product.status !== "active") {
+          res.status(400).json(
+            SellPresenter.formatError({
+              message: "Hay un producto inactivo en la compra",
+            })
+          );
+          return;
+        }
+
+        if (!inventory || inventory.quantity < line.quantity) {
+          res.status(400).json(
+            SellPresenter.formatError({
+              message: "No hay stock suficiente para completar la compra",
+            })
+          );
+          return;
+        }
+      }
+
       const sell = await SellModel.create(result.data as Sell);
+
+      if (result.data.couponCode) {
+        await prisma.coupon.update({
+          where: { code: result.data.couponCode },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
 
       if (sell?.productSells) {
         const productUpdatePromises = sell.productSells.map(
@@ -215,6 +289,41 @@ export const SellController = {
         );
     } catch (error) {
       res.status(500).json(SellPresenter.formatError(error));
+    }
+  },
+
+  updateStatus: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = paramString(req.params.id);
+      const status = req.body?.status;
+      if (!id || !status) {
+        res
+          .status(400)
+          .json(SellPresenter.formatError({ message: "Faltan datos" }));
+        return;
+      }
+      const sell = await SellModel.updateStatus(id, status);
+      res
+        .status(200)
+        .json(SellPresenter.formatSuccess(sell, "Estado actualizado"));
+    } catch (error) {
+      res.status(400).json(SellPresenter.formatError(error));
+    }
+  },
+
+  cancelSell: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = paramString(req.params.id);
+      if (!id) {
+        res
+          .status(400)
+          .json(SellPresenter.formatError({ message: "Falta el id" }));
+        return;
+      }
+      const sell = await SellModel.cancel(id);
+      res.status(200).json(SellPresenter.formatSuccess(sell, "Venta anulada"));
+    } catch (error) {
+      res.status(400).json(SellPresenter.formatError(error));
     }
   },
 

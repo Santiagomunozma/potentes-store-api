@@ -11,6 +11,7 @@ export type Product = {
   imageUrl: string;
   description: string;
   price: number;
+  categoryId?: string | null;
   inventory?: Inventory[];
   createdAt?: Date;
   updatedAt?: Date;
@@ -21,6 +22,7 @@ export const ProductModel = {
   findAll: async () => {
     const products = await prisma.product.findMany({
       include: {
+        category: true,
         inventories: {
           include: {
             size: true,
@@ -125,6 +127,7 @@ export const ProductModel = {
         id,
       },
       include: {
+        category: true,
         inventories: {
           include: {
             size: true,

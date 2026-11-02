@@ -6,16 +6,17 @@ export const UserPresenter = {
 
     // Exclude sensitive information like password
     const { password, ...safeUser } = user;
-    return safeUser;
+    return {
+      ...safeUser,
+      purchaseCount: user.customer?._count?.sells ?? 0,
+      salesCount: user.employee?._count?.sells ?? 0,
+    };
   },
 
   formatUserList: (users: any[]): Partial<User>[] => {
     if (!users || !users.length) return [];
 
-    return users.map((user) => {
-      const { password, ...safeUser } = user;
-      return safeUser;
-    });
+    return users.map((user) => UserPresenter.formatUser(user)!);
   },
 
   formatError: (error: any) => {
